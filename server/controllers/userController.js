@@ -29,7 +29,8 @@ export const register = async (req, res)=>{
             maxAge: 7 * 24 * 60 * 60 * 1000, // Cookie expiration time
         })
 
-        return res.json({success: true, user: {email: user.email, name: user.name}})
+        const userWithoutPassword = await User.findById(user._id).select("-password");
+        return res.json({success: true, user: userWithoutPassword})
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message });
@@ -64,7 +65,8 @@ export const login = async (req, res)=>{
             maxAge: 7 * 24 * 60 * 60 * 1000,
         })
 
-        return res.json({success: true, user: {email: user.email, name: user.name}})
+        const userWithoutPassword = await User.findById(user._id).select("-password");
+        return res.json({success: true, user: userWithoutPassword})
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message });
@@ -75,10 +77,9 @@ export const login = async (req, res)=>{
 // Check Auth : /api/user/is-auth
 export const isAuth = async (req, res)=>{
     try {
-        const { userId } = req.body;
+        const userId = req.userId;
         const user = await User.findById(userId).select("-password")
         return res.json({success: true, user})
-
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message });

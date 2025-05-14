@@ -30,7 +30,7 @@ const SellerLayout = () => {
 
     return (
         <div className="seller-layout">
-            <div className="flex items-center justify-between px-4 md:px-8 border-b border-gray-300 py-3 bg-white">
+            <div className="flex items-center justify-between px-4 md:px-8 border-b border-gray-300 py-4.5 bg-white">
                 <Link to='/'>
                     <h1 className="font-avenir font-black italic w-2xs text-xl hover:text-primary transition-colors">
                     <span className="tracking-widest">DAGGROSS</span> - <span className="text-primary font-bold text-lg">Backoffice</span>

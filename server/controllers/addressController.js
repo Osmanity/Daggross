@@ -5,10 +5,32 @@ import Address from "../models/Address.js"
 export const addAddress = async(req, res)=>{
     try {
         const { address } = req.body
-        await Address.create({...address, userId: req.userId})
-        res.json({success: true, message: "Address added successfully"})
+        const userId = req.userId
+
+        // Validate required fields
+        const requiredFields = ['firstName', 'lastName', 'email', 'street', 'city', 'state', 'zipcode', 'country', 'phone'];
+        const missingFields = requiredFields.filter(field => !address[field]);
+        
+        if (missingFields.length > 0) {
+            return res.json({
+                success: false,
+                message: `Följande fält saknas: ${missingFields.join(', ')}`
+            });
+        }
+
+        // Create new address
+        const newAddress = await Address.create({
+            ...address,
+            userId
+        });
+
+        res.json({
+            success: true,
+            message: "Adress sparad",
+            address: newAddress
+        });
     } catch (error) {
-        console.log(error.message);
+        console.error(error.message);
         res.json({ success: false, message: error.message });
     }
 }
@@ -17,10 +39,10 @@ export const addAddress = async(req, res)=>{
 export const getAddress = async(req, res)=>{
     try {
         const userId = req.userId
-        const addresses = await Address.find({userId})
+        const addresses = await Address.find({userId}).sort({createdAt: -1})
         res.json({success: true, addresses})
     } catch (error) {
-        console.log(error.message);
+        console.error(error.message);
         res.json({ success: false, message: error.message });
     }
 }

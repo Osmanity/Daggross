@@ -7,11 +7,12 @@ import User from "../models/User.js"
 export const placeOrderCOD = async (req, res)=>{
     try {
         const { items, address, deliveryDate } = req.body;
-        const userId = req.userId;
+        const userId = req.userId; // Get userId from auth middleware
+
         if(!address || items.length === 0 || !deliveryDate){
-            return res.json({success: false, message: "Invalid data"})
+            return res.json({success: false, message: "Vänligen fyll i alla obligatoriska fält"})
         }
-        
+
         // Calculate Amount Using Items
         let amount = 0;
         for(const item of items) {
@@ -50,7 +51,11 @@ export const placeOrderCOD = async (req, res)=>{
 
         return res.json({success: true, message: "Order Placed Successfully" })
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        console.error(error);
+        return res.json({
+            success: false,
+            message: "Ett fel uppstod när ordern skulle skapas"
+        });
     }
 }
 
@@ -58,11 +63,11 @@ export const placeOrderCOD = async (req, res)=>{
 export const placeOrderStripe = async (req, res)=>{
     try {
         const { items, address, deliveryDate } = req.body;
-        const userId = req.userId;
+        const userId = req.userId; // Get userId from auth middleware
         const {origin} = req.headers;
 
         if(!address || items.length === 0 || !deliveryDate){
-            return res.json({success: false, message: "Invalid data"})
+            return res.json({success: false, message: "Vänligen fyll i alla obligatoriska fält"})
         }
 
         let productData = [];
@@ -105,7 +110,9 @@ export const placeOrderStripe = async (req, res)=>{
             amount,
             address,
             paymentType: "Online",
-            deliveryDate: new Date(deliveryDate)
+            deliveryDate: new Date(deliveryDate),
+            isPaid: false,
+            status: 'Väntar på betalning'
         });
 
     // Stripe Gateway Initialize    
@@ -133,82 +140,143 @@ export const placeOrderStripe = async (req, res)=>{
         cancel_url: `${origin}/cart`,
         metadata: {
             orderId: order._id.toString(),
-            userId,
+            userId: userId.toString(),
         }
      })
 
         return res.json({success: true, url: session.url });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        console.error(error);
+        return res.json({
+            success: false,
+            message: "Ett fel uppstod när ordern skulle skapas"
+        });
     }
 }
 // Stripe Webhooks to Verify Payments Action : /stripe
-export const stripeWebhooks = async (request, response)=>{
-    // Stripe Gateway Initialize
-    const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
-
-    const sig = request.headers["stripe-signature"];
-    let event;
-
+export const stripeWebhooks = async (request, response) => {
     try {
-        event = stripeInstance.webhooks.constructEvent(
-            request.body,
-            sig,
-            process.env.STRIPE_WEBHOOK_SECRET
-        );
-    } catch (error) {
-        response.status(400).send(`Webhook Error: ${error.message}`)
-    }
+        const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
+        const sig = request.headers["stripe-signature"];
+        
+        let event;
+        try {
+            event = stripeInstance.webhooks.constructEvent(
+                request.body,
+                sig,
+                process.env.STRIPE_WEBHOOK_SECRET
+            );
+        } catch (error) {
+            console.error('Webhook signature verification failed:', error.message);
+            return response.status(400).send(`Webhook Error: ${error.message}`);
+        }
 
-    // Handle the event
-    switch (event.type) {
-        case "checkout.session.completed": {
-            const session = event.data.object;
-            const { orderId, userId } = session.metadata;
+        // Handle the event
+        switch (event.type) {
+            case "checkout.session.completed": {
+                const session = event.data.object;
+                const { orderId, userId } = session.metadata;
+                
+                try {
+                    console.log('Processing completed payment for order:', orderId);
+                    
+                    // Mark Payment as Paid with explicit status update
+                    const updatedOrder = await Order.findByIdAndUpdate(
+                        orderId,
+                        { 
+                            isPaid: true,
+                            status: 'Betalning mottagen',
+                            $set: { updatedAt: new Date() }
+                        },
+                        { new: true }
+                    );
+                    
+                    if (!updatedOrder) {
+                        console.error('Order not found:', orderId);
+                        return response.status(404).json({ error: 'Order not found' });
+                    }
+                    
+                    console.log('Order updated successfully:', updatedOrder);
+                    
+                    // Clear user cart
+                    await User.findByIdAndUpdate(
+                        userId,
+                        { cartItems: {} }
+                    );
+                    
+                    break;
+                } catch (error) {
+                    console.error('Error updating order:', error);
+                    return response.status(500).json({ error: 'Failed to update order' });
+                }
+            }
             
-            // Mark Payment as Paid
-            await Order.findByIdAndUpdate(orderId, {isPaid: true});
-            // Clear user cart
-            await User.findByIdAndUpdate(userId, {cartItems: {}});
-            break;
+            case "checkout.session.expired": {
+                const session = event.data.object;
+                const { orderId } = session.metadata;
+                try {
+                    const deletedOrder = await Order.findByIdAndDelete(orderId);
+                    console.log('Expired order deleted:', deletedOrder?._id);
+                    break;
+                } catch (error) {
+                    console.error('Error deleting expired order:', error);
+                    return response.status(500).json({ error: 'Failed to delete expired order' });
+                }
+            }
+            
+            default:
+                console.log(`Unhandled event type ${event.type}`);
         }
-        case "checkout.session.expired": {
-            const session = event.data.object;
-            const { orderId } = session.metadata;
-            await Order.findByIdAndDelete(orderId);
-            break;
-        }
-        default:
-            console.error(`Unhandled event type ${event.type}`)
-            break;
+
+        return response.json({ received: true });
+    } catch (error) {
+        console.error('Webhook processing failed:', error);
+        return response.status(500).json({ error: 'Webhook processing failed' });
     }
-    response.json({received: true});
 }
 
 
 // Get Orders by User ID : /api/order/user
-export const getUserOrders = async (req, res)=>{
+export const getUserOrders = async (req, res) => {
     try {
         const userId = req.userId;
         const orders = await Order.find({
             userId,
-            $or: [{paymentType: "COD"}, {isPaid: true}]
-        }).populate("items.product address").sort({createdAt: -1});
+            $or: [
+                { paymentType: "COD" },
+                { paymentType: "Online" } // Ta med alla online-ordrar, oavsett betalningsstatus
+            ]
+        })
+        .populate("items.product address")
+        .sort({createdAt: -1});
+        
+        console.log('Fetched orders:', orders); // Lägg till loggning för felsökning
+        
         res.json({ success: true, orders });
     } catch (error) {
+        console.error('Error fetching orders:', error);
         res.json({ success: false, message: error.message });
     }
 }
 
 
-// Get All Orders ( for seller / admin) : /api/order/seller
-export const getAllOrders = async (req, res)=>{
+// Get All Orders (for seller / admin) : /api/order/seller
+export const getAllOrders = async (req, res) => {
     try {
         const orders = await Order.find({
-            $or: [{paymentType: "COD"}, {isPaid: true}]
-        }).populate("items.product address").sort({createdAt: -1});
+            $or: [
+                { paymentType: "COD" },
+                { paymentType: "Online" } // Inkludera alla online-ordrar, oavsett betalningsstatus
+            ]
+        })
+        .populate("items.product address")
+        .sort({createdAt: -1});
+
+        console.log('Fetched all orders for seller:', orders.length); // Loggning för felsökning
+        
         res.json({ success: true, orders });
     } catch (error) {
+        console.error('Error fetching seller orders:', error);
         res.json({ success: false, message: error.message });
     }
 }

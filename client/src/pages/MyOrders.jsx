@@ -1,27 +1,38 @@
 import React, { useEffect, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { dummyOrders } from '../assets/assets'
+import toast from 'react-hot-toast'
 
 const MyOrders = () => {
 
     const [myOrders, setMyOrders] = useState([])
-    const {currency, axios, user} = useAppContext()
+    const {currency, axios, user, navigate} = useAppContext()
 
     const fetchMyOrders = async ()=>{
         try {
             const { data } = await axios.get('/api/order/user')
             if(data.success){
                 setMyOrders(data.orders)
+            } else {
+                toast.error(data.message || 'Failed to fetch orders')
             }
         } catch (error) {
-            console.log(error);
+            console.error(error);
+            toast.error('Failed to fetch orders')
         }
     }
 
+    useEffect(() => {
+        const interval = setInterval(fetchMyOrders, 2000);
+        return () => clearInterval(interval);
+    }, []);
+
     useEffect(()=>{
-        if(user){
-            fetchMyOrders()
+        if(!user) {
+            navigate('/login');
+            return;
         }
+        fetchMyOrders();
     },[user])
 
   return (

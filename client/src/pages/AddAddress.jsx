@@ -20,9 +20,9 @@ const AddAddress = () => {
     const {axios, user, navigate} = useAppContext();
 
     const [address, setAddress] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
+        firstName: user?.name?.split(' ')[0] || '',
+        lastName: user?.name?.split(' ')[1] || '',
+        email: user?.email || '',
         street: '',
         city: '',
         state: '',
@@ -63,44 +63,45 @@ const AddAddress = () => {
     useEffect(()=>{
         if(!user){
             navigate('/cart')
+            return;
         }
-    },[])
+    },[user, navigate])
 
   return (
     <div className='mt-16 pb-16'>
-      <p className='text-2xl md:text-3xl text-gray-500'>Add Shipping <span className='font-semibold text-primary'>Address</span></p>
+      <p className='text-2xl md:text-3xl text-gray-500'>Lägg till <span className='font-semibold text-primary'>leveransadress</span></p>
       <div className='flex flex-col-reverse md:flex-row justify-between mt-10'>
             <div className='flex-1 max-w-md'>
              <form onSubmit={onSubmitHandler} className='space-y-3 mt-6 text-sm'>
 
                 <div className='grid grid-cols-2 gap-4'>
-                    <InputField handleChange={handleChange} address={address} name='firstName' type="text" placeholder="First Name"/>
-                    <InputField handleChange={handleChange} address={address} name='lastName' type="text" placeholder="Last Name"/>
+                    <InputField handleChange={handleChange} address={address} name='firstName' type="text" placeholder="Förnamn"/>
+                    <InputField handleChange={handleChange} address={address} name='lastName' type="text" placeholder="Efternamn"/>
                 </div>
 
-                <InputField handleChange={handleChange} address={address} name='email' type="email" placeholder="Email address" />
-                <InputField handleChange={handleChange} address={address} name='street' type="text" placeholder="Street" />
+                <InputField handleChange={handleChange} address={address} name='email' type="email" placeholder="E-postadress" />
+                <InputField handleChange={handleChange} address={address} name='street' type="text" placeholder="Gatuadress" />
 
                 <div className='grid grid-cols-2 gap-4'>
-                    <InputField handleChange={handleChange} address={address} name='city' type="text" placeholder="City" />
-                    <InputField handleChange={handleChange} address={address} name='state' type="text" placeholder="State" />
+                    <InputField handleChange={handleChange} address={address} name='city' type="text" placeholder="Stad" />
+                    <InputField handleChange={handleChange} address={address} name='state' type="text" placeholder="Län" />
                 </div>
 
                 <div className='grid grid-cols-2 gap-4'>
-                    <InputField handleChange={handleChange} address={address} name='zipcode' type="number" placeholder="Zip code" />
-                    <InputField handleChange={handleChange} address={address} name='country' type="text" placeholder="Country" />
+                    <InputField handleChange={handleChange} address={address} name='zipcode' type="number" placeholder="Postnummer" />
+                    <InputField handleChange={handleChange} address={address} name='country' type="text" placeholder="Land" />
                 </div>
 
-                <InputField handleChange={handleChange} address={address} name='phone' type="text" placeholder="Phone" />
+                <InputField handleChange={handleChange} address={address} name='phone' type="tel" placeholder="Telefonnummer" />
 
                 <button className='w-full mt-6 bg-primary text-white py-3 hover:bg-primary-dull transition cursor-pointer uppercase'>
-                    Save address
+                    Spara adress
                 </button>
 
 
              </form>
             </div>
-            <img className='md:mr-16 mb-16 md:mt-0' src={assets.add_address_iamge} alt="Add Address" />
+            <img className='md:mr-16 mb-16 md:mt-0' src={assets.add_address_iamge} alt="Lägg till adress" />
       </div>
     </div>
   )

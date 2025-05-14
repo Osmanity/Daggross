@@ -14,7 +14,7 @@ const Footer = () => {
                 </NavLink>
                 
                     <p className="max-w-[410px] mt-6">
-                        Vi levererar färska matvaror och snacks direkt till din dörr. Med tusentals nöjda kunder strävar vi efter att göra din shoppingupplevelse enkel och prisvärd.</p>
+                    En grossistlösning för företag som vill göra smarta inköp av matvaror. Med fokus på färskhet, tillgänglighet och service hjälper vi företag att få rätt varor i rätt tid – utan krångel.</p>
                 </div>
                 <div className="flex flex-wrap justify-between w-full md:w-[45%] gap-5">
                     {footerLinks.map((section, index) => (
