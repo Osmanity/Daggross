@@ -19,7 +19,7 @@ await connectDB()
 await connectCloudinary()
 
 // Allow multiple origins
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:4000']
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:4000', "https://daggross.vercel.app/"]
 
 // Webhook endpoint måste komma FÖRE andra middleware
 app.post('/stripe', 
