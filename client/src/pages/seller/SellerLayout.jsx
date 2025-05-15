@@ -29,7 +29,7 @@ const SellerLayout = () => {
     }
 
     return (
-        <div className="seller-layout">
+        <div className="seller-layout h-screen flex flex-col">
             <div className="flex items-center justify-between px-4 md:px-8 border-b border-gray-300 py-4.5 bg-white">
                 <Link to='/'>
                     <h1 className="font-avenir font-black italic w-2xs text-xl hover:text-primary transition-colors">
@@ -41,8 +41,8 @@ const SellerLayout = () => {
                     <button onClick={logout} className='border rounded-full text-sm px-4 py-1'>Logga ut</button>
                 </div>
             </div>
-            <div className="flex">
-               <div className="md:w-64 w-16 border-r h-[95vh] text-base border-gray-300 pt-4 flex flex-col">
+            <div className="flex flex-1 overflow-hidden">
+               <div className="md:w-64 w-16 border-r border-gray-300 pt-4 flex flex-col bg-white">
                 {sidebarLinks.map((item) => (
                     <NavLink to={item.path} key={item.name} end={item.path === "/seller"}
                         className={({isActive})=>`flex items-center py-3 px-4 gap-3 
@@ -55,10 +55,11 @@ const SellerLayout = () => {
                         <p className="md:block hidden text-center">{item.name}</p>
                     </NavLink>
                 ))}
-            </div> 
-                <Outlet/>
+                </div> 
+                <div className="flex-1 overflow-hidden">
+                    <Outlet/>
+                </div>
             </div>
-             
         </div>
     );
 };

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { assets, categories } from '../../assets/assets';
 import { useAppContext } from '../../context/AppContext';
 import toast from 'react-hot-toast';
+import Loading from '../../components/Loading'
 
 const AddProduct = () => {
 
@@ -12,12 +13,14 @@ const AddProduct = () => {
     const [price, setPrice] = useState('');
     const [offerPrice, setOfferPrice] = useState('');
     const [quantity, setQuantity] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const {axios} = useAppContext()
 
     const onSubmitHandler = async (event) => {
         try {
             event.preventDefault();
+            setLoading(true);
 
             const productData = {
                 name,
@@ -52,8 +55,14 @@ const AddProduct = () => {
 
         } catch (error) {
             toast.error(error.message)
+        } finally {
+            setLoading(false)
         }
         
+    }
+
+    if (loading) {
+        return <Loading fullScreen={true} />
     }
 
   return (

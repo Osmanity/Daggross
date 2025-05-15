@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useAppContext } from '../../context/AppContext'
 import { assets } from '../../assets/assets'
 import toast from 'react-hot-toast'
+import Loading from '../../components/Loading'
 
 const Orders = () => {
     const {currency, axios} = useAppContext()
@@ -35,11 +36,7 @@ const Orders = () => {
     }, []);
 
     if (loading) {
-        return (
-            <div className="flex justify-center items-center h-full">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
-            </div>
-        )
+        return <Loading fullScreen={true} />
     }
 
     return (
@@ -74,31 +71,31 @@ const Orders = () => {
                                 </div>
                             </div>
 
-                            <div className="text-sm md:text-base text-black/60">
-                                {order.address ? (
-                                    <>
-                                        <p className='text-black/80'>
-                                            {order.address.firstName} {order.address.lastName}
-                                        </p>
-                                        <p>{order.address.street}, {order.address.city}</p>
-                                        <p>{order.address.state}, {order.address.zipcode}, {order.address.country}</p>
-                                        <p>{order.address.phone}</p>
-                                    </>
-                                ) : (
-                                    <p className='text-black/80'>Address information unavailable</p>
-                                )}
-                            </div>
+                        <div className="text-sm md:text-base text-black/60">
+                            {order.address ? (
+                                <>
+                                    <p className='text-black/80'>
+                                        {order.address.firstName} {order.address.lastName}
+                                    </p>
+                                    <p>{order.address.street}, {order.address.city}</p>
+                                    <p>{order.address.state}, {order.address.zipcode}, {order.address.country}</p>
+                                    <p>{order.address.phone}</p>
+                                </>
+                            ) : (
+                                <p className='text-black/80'>Address information unavailable</p>
+                            )}
+                        </div>
 
-                            <div className="flex flex-col items-end gap-2">
-                                <p className="font-medium text-lg">
-                                    {order.amount}{currency}
-                                </p>
-                                <div className={`px-3 py-1 rounded-full text-sm ${
-                                    order.isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                    {order.isPaid ? 'Betald' : 'Väntar på betalning'}
-                                </div>
+                        <div className="flex flex-col items-end gap-2">
+                            <p className="font-medium text-lg">
+                                {order.amount}{currency}
+                            </p>
+                            <div className={`px-3 py-1 rounded-full text-sm ${
+                                order.isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                                {order.isPaid ? 'Betald' : 'Väntar på betalning'}
                             </div>
+                        </div>
 
                             <div className="flex flex-col text-sm md:text-base text-black/60">
                                 <p>Metod: {order.paymentType === "COD" ? "Postförskott" : "Online"}</p>

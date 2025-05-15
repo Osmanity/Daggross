@@ -1,25 +1,13 @@
-import React, { useEffect } from 'react'
-import { useAppContext } from '../context/AppContext'
-import { useLocation } from 'react-router-dom'
+import React from 'react'
 
-const Loading = () => {
-
-    const { navigate } = useAppContext()
-    let { search } = useLocation()
-    const query = new URLSearchParams(search)
-    const nextUrl = query.get('next');
-
-    useEffect(()=>{
-        if(nextUrl){
-            setTimeout(()=>{
-                navigate(`/${nextUrl}`)
-            },5000)
-        }
-    },[nextUrl])
+const Loading = ({ fullScreen = false }) => {
+  const containerClasses = fullScreen 
+    ? 'fixed inset-0 flex justify-center items-center'
+    : 'flex justify-center items-center h-full';
 
   return (
-    <div className='flex justify-center items-center h-screen'>
-      <div className='animate-spin rounded-full h-24 w-24 border-4 border-gray-300 border-t-primary'></div>
+    <div className={containerClasses}>
+      <div className='animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent'></div>
     </div>
   )
 }
