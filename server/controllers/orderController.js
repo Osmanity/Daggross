@@ -156,9 +156,15 @@ export const placeOrderStripe = async (req, res)=>{
 // Stripe Webhooks to Verify Payments Action : /stripe
 export const stripeWebhooks = async (request, response) => {
     try {
+        console.log('Webhook received - starting processing');
         const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
         const sig = request.headers["stripe-signature"];
         
+        if (!sig) {
+            console.log('No Stripe signature found');
+            return response.status(400).send('No signature found');
+        }
+
         let event;
         try {
             event = stripeInstance.webhooks.constructEvent(
@@ -166,74 +172,56 @@ export const stripeWebhooks = async (request, response) => {
                 sig,
                 process.env.STRIPE_WEBHOOK_SECRET
             );
+            console.log('Event type:', event.type);
         } catch (error) {
-            console.error('Webhook signature verification failed:', error.message);
+            console.log('Webhook verification failed:', error.message);
             return response.status(400).send(`Webhook Error: ${error.message}`);
         }
 
-        // Handle the event
-        switch (event.type) {
-            case "checkout.session.completed": {
-                const session = event.data.object;
-                const { orderId, userId } = session.metadata;
-                
-                try {
-                    console.log('Processing completed payment for order:', orderId);
-                    
-                    // Mark Payment as Paid with explicit status update
-                    const updatedOrder = await Order.findByIdAndUpdate(
-                        orderId,
-                        { 
-                            isPaid: true,
-                            status: 'Betalning mottagen',
-                            $set: { updatedAt: new Date() }
-                        },
-                        { new: true }
-                    );
-                    
-                    if (!updatedOrder) {
-                        console.error('Order not found:', orderId);
-                        return response.status(404).json({ error: 'Order not found' });
-                    }
-                    
-                    console.log('Order updated successfully:', updatedOrder);
-                    
-                    // Clear user cart
-                    await User.findByIdAndUpdate(
-                        userId,
-                        { cartItems: {} }
-                    );
-                    
-                    break;
-                } catch (error) {
-                    console.error('Error updating order:', error);
-                    return response.status(500).json({ error: 'Failed to update order' });
-                }
-            }
+        if (event.type === "checkout.session.completed") {
+            const session = event.data.object;
+            console.log('Payment status:', session.payment_status);
+            console.log('Order metadata:', session.metadata);
+
+            const { orderId, userId } = session.metadata;
             
-            case "checkout.session.expired": {
-                const session = event.data.object;
-                const { orderId } = session.metadata;
-                try {
-                    const deletedOrder = await Order.findByIdAndDelete(orderId);
-                    console.log('Expired order deleted:', deletedOrder?._id);
-                    break;
-                } catch (error) {
-                    console.error('Error deleting expired order:', error);
-                    return response.status(500).json({ error: 'Failed to delete expired order' });
+            try {
+                const updatedOrder = await Order.findByIdAndUpdate(
+                    orderId,
+                    {
+                        isPaid: true,
+                        status: 'Betalning mottagen'
+                    },
+                    { new: true }
+                );
+
+                if (!updatedOrder) {
+                    console.log('Order not found:', orderId);
+                    return response.status(404).json({ error: 'Order not found' });
                 }
+
+                console.log('Order updated successfully:', {
+                    orderId: updatedOrder._id,
+                    isPaid: updatedOrder.isPaid,
+                    status: updatedOrder.status
+                });
+
+                await User.findByIdAndUpdate(
+                    userId,
+                    { cartItems: {} }
+                );
+            } catch (error) {
+                console.log('Error updating order:', error.message);
+                return response.status(500).json({ error: 'Failed to update order' });
             }
-            
-            default:
-                console.log(`Unhandled event type ${event.type}`);
         }
 
-        return response.json({ received: true });
+        return response.status(200).json({ received: true });
     } catch (error) {
-        console.error('Webhook processing failed:', error);
+        console.log('Webhook processing failed:', error.message);
         return response.status(500).json({ error: 'Webhook processing failed' });
     }
-}
+};
 
 
 // Get Orders by User ID : /api/order/user
@@ -250,7 +238,6 @@ export const getUserOrders = async (req, res) => {
         .populate("items.product address")
         .sort({createdAt: -1});
         
-        console.log('Fetched orders:', orders); // Lägg till loggning för felsökning
         
         res.json({ success: true, orders });
     } catch (error) {
