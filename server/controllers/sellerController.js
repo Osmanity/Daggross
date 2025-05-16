@@ -26,6 +26,32 @@ export const sellerLogin = async (req, res) =>{
     }
 }
 
+// Get Seller Profile : /api/seller/profile
+export const getSellerProfile = async (req, res) => {
+    try {
+        const { sellerToken } = req.cookies;
+        if (!sellerToken) {
+            return res.json({ success: false, message: 'Not Authorized' });
+        }
+
+        const tokenDecode = jwt.verify(sellerToken, process.env.JWT_SECRET);
+        if (tokenDecode.email === process.env.SELLER_EMAIL) {
+            return res.json({
+                success: true,
+                seller: {
+                    name: process.env.SELLER_NAME || 'Säljare',
+                    email: process.env.SELLER_EMAIL
+                }
+            });
+        } else {
+            return res.json({ success: false, message: 'Not Authorized' });
+        }
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message });
+    }
+}
+
 // Seller isAuth : /api/seller/is-auth
 export const isSellerAuth = async (req, res)=>{
     try {

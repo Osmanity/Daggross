@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { dummyProducts } from "../assets/assets";
 import toast from "react-hot-toast";
 import axios from "axios";
+import Loading from "../components/Loading";
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
@@ -19,6 +20,7 @@ export const AppContextProvider = ({children})=>{
     const [products, setProducts] = useState([]);
     const [cartItems, setCartItems] = useState({});
     const [searchQuery, setSearchQuery] = useState({});
+    const [isLoading, setIsLoading] = useState(true);
 
     // Fetch User Auth Status, User Data and Cart Items
     const fetchUser = async () => {
@@ -34,8 +36,17 @@ export const AppContextProvider = ({children})=>{
         } catch (error) {
             setUser(null);
             setCartItems({});
+        } finally {
+            setIsLoading(false);
         }
     };
+
+    // Initial auth check when app loads
+    useEffect(() => {
+        fetchUser();
+        fetchSeller();
+        fetchProducts();
+    }, []);
 
     // Logout User
     const logoutUser = async () => {
@@ -154,13 +165,6 @@ export const AppContextProvider = ({children})=>{
         return Math.floor(totalAmount * 100) / 100;
     };
 
-    // Initial fetch of user data and products
-    useEffect(() => {
-        fetchUser();
-        fetchSeller();
-        fetchProducts();
-    }, []);
-
     // Update Database Cart Items when cart changes
     useEffect(() => {
         const updateCart = async () => {
@@ -201,8 +205,13 @@ export const AppContextProvider = ({children})=>{
         axios,
         fetchProducts,
         logoutUser,
-        fetchUser
+        fetchUser,
+        isLoading
     };
+
+    if (isLoading) {
+        return <Loading fullScreen={true} />;
+    }
 
     return <AppContext.Provider value={value}>
         {children}

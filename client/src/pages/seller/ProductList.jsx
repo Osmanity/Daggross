@@ -189,7 +189,7 @@ const ProductList = () => {
     
     
     return (
-        <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll flex flex-col justify-between">
+        <div className="flex-1 h-[93vh] overflow-y-scroll flex flex-col justify-between  [&::-webkit-scrollbar-track]:bg-gray-200/40 [&::-webkit-scrollbar-thumb]:bg-green-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-[3px] [&::-webkit-scrollbar-thumb]:border-solid [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-clip-padding">
             <div className="w-full p-2 md:p-6 lg:p-10">
                 <div className="flex justify-between items-center pb-4">
                     <h2 className="text-lg font-medium">All Products</h2>
@@ -204,7 +204,7 @@ const ProductList = () => {
                 </div>
                 
                 {/* Responsive table container */}
-                <div className="overflow-x-auto rounded-md bg-white border border-gray-500/20">
+                <div className="overflow-x-auto rounded-md bg-white border border-gray-500/20 [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar]:mt-2 [&::-webkit-scrollbar-track]:bg-gray-200/40 [&::-webkit-scrollbar-thumb]:bg-green-600 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-green-700 [&::-webkit-scrollbar-thumb]:border-[3px] [&::-webkit-scrollbar-thumb]:border-solid [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-clip-padding">
                     <div className="min-w-[900px]"> {/* Minimum width för att undvika för mycket komprimering */}
                         <table className="w-full">
                             <thead className="text-gray-900 text-sm text-left bg-gray-50">
@@ -341,7 +341,7 @@ const ProductList = () => {
             {/* Edit Modal */}
             {showEditModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+                    <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-track]:bg-gray-200/40 [&::-webkit-scrollbar-thumb]:bg-green-600 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-green-700 [&::-webkit-scrollbar-thumb]:border-[3px] [&::-webkit-scrollbar-thumb]:border-solid [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-clip-padding">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-semibold">Edit Product</h3>
                             <button 

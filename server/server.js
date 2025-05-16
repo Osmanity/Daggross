@@ -21,41 +21,46 @@ await connectCloudinary()
 // Allow multiple origins
 const allowedOrigins = ['http://localhost:5173', 'http://localhost:4000', "https://daggross.vercel.app", "https://daggross-a6cx.vercel.app/api/product/list"]
 
-// Webhook endpoint måste komma FÖRE andra middleware
-app.post('/stripe', 
-    express.raw({type: 'application/json'}),
-    (req, res, next) => {
-        console.log('Webhook received');
-        next();
-    },
-    stripeWebhooks
-);
-
-// Övriga middleware
-app.use(express.json());
-app.use(cookieParser());
+// Configure CORS
 app.use(cors({
-    origin: allowedOrigins,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'stripe-signature']
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) === -1) {
+            var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    credentials: true
 }));
 
-app.get('/', (req, res) => res.send("API is Working"));
-app.use('/api/user', userRouter)
-app.use('/api/seller', sellerRouter)
-app.use('/api/product', productRouter)
-console.log('Product routes registered:');
-console.log(productRouter.stack.map(r => r.route?.path).filter(Boolean));
-app.use('/api/cart', cartRouter)
-app.use('/api/address', addressRouter)
-app.use('/api/order', orderRouter)
+// IMPORTANT: Stripe webhook endpoint must be registered BEFORE body parsers
+const webhookMiddleware = express.raw({ type: 'application/json' });
+app.post('/webhook', webhookMiddleware, (req, res, next) => {
+    if (req.headers['stripe-signature']) {
+        console.log('✅ Stripe webhook mottagen');
+    }
+    next();
+}, stripeWebhooks);
 
-// Add a basic test route at the root level
-app.get('/test', (req, res) => {
-    res.json({ message: 'Server is running' });
+// Regular middleware for other routes
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Routes
+app.use('/api/user', userRouter);
+app.use('/api/seller', sellerRouter);
+app.use('/api/product', productRouter);
+app.use('/api/cart', cartRouter);
+app.use('/api/address', addressRouter);
+app.use('/api/order', orderRouter);
+
+app.listen(port, () => {
+    console.log('\n=== Server Configuration ===');
+    console.log('Stripe Webhook URL:');
+    console.log(`http://localhost:${port}/webhook`);
+    console.log('==========================\n');
 });
-
-app.listen(port, ()=>{
-    console.log(`Server is running on http://localhost:${port}`)
-})

@@ -12,6 +12,16 @@ const orderSchema = new mongoose.Schema({
     paymentType: {type: String, required: true},
     isPaid: {type: Boolean, required: true, default: false},
     deliveryDate: {type: Date, required: true},
+    codDetails: {
+        trackingNumber: {type: String},
+        estimatedDelivery: {type: Date},
+        codAmount: {type: Number},
+        codStatus: {
+            type: String,
+            enum: ['Ej skickad', 'Skickad till ombud', 'Hos ombud', 'Redo för upphämtning', 'Upphämtad', 'Returnerad'],
+            default: 'Ej skickad'
+        }
+    }
 },{ timestamps: true })
 
 const Order = mongoose.models.order || mongoose.model('order', orderSchema)
